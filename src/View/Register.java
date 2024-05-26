@@ -1,151 +1,161 @@
 package View;
 
+import java.awt.EventQueue;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+
+import DBConnection.DBConnection;
+
+import java.awt.Color;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.JPasswordField;
+import java.awt.Font;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.awt.event.ActionEvent;
 
-import javax.swing.JOptionPane;
+public class Register extends JFrame {
 
-import DBConnection.DBConnection;
+	private static final long serialVersionUID = 1L;
+	private JPanel contentPane;
+	private JTextField textField;
+	private JPasswordField passwordField;
+	private JPasswordField passwordField_1;
 
-public class Register extends javax.swing.JFrame {
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					Register frame = new Register();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
 
+	/**
+	 * Create the frame.
+	 */
 	public Register() {
-		initComponents();
-	}
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 450, 300);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-	private void initComponents() {
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		JPanel panel = new JPanel();
+		panel.setBackground(new Color(51, 204, 255));
+		panel.setBounds(0, 0, 218, 275);
+		contentPane.add(panel);
+		panel.setLayout(null);
+		
+		JLabel lblNewLabel_4 = new JLabel("New label");
+		lblNewLabel_4.setIcon(new ImageIcon("D:\\Admin\\eclipse\\DACS1\\src\\icon\\icons8-bus-100.png"));
+		lblNewLabel_4.setBounds(44, 80, 100, 100);
+		panel.add(lblNewLabel_4);
+		
+		JLabel lblNewLabel_3 = new JLabel("New label");
+		lblNewLabel_3.setIcon(new ImageIcon("D:\\Admin\\eclipse\\DACS1\\src\\icon\\icons8-ticket-100.png"));
+		lblNewLabel_3.setBounds(84, 31, 100, 100);
+		panel.add(lblNewLabel_3);
+		
+		JLabel lblNewLabel = new JLabel("Đăng ký");
+		lblNewLabel.setFont(new Font("Times New Roman", Font.BOLD | Font.ITALIC, 35));
+		lblNewLabel.setBounds(265, 11, 123, 43);
+		contentPane.add(lblNewLabel);
+		
+		textField = new JTextField();
+		textField.setBounds(305, 75, 96, 20);
+		contentPane.add(textField);
+		textField.setColumns(10);
+		
+		passwordField = new JPasswordField();
+		passwordField.setBounds(305, 115, 96, 20);
+		contentPane.add(passwordField);
+		
+		passwordField_1 = new JPasswordField();
+		passwordField_1.setBounds(305, 155, 96, 20);
+		contentPane.add(passwordField_1);
+		
+		JLabel lblNewLabel_1 = new JLabel("New label");
+		lblNewLabel_1.setIcon(new ImageIcon("D:\\Admin\\eclipse\\DACS1\\src\\icon\\icons8-user-30.png"));
+		lblNewLabel_1.setBounds(265, 70, 30, 30);
+		contentPane.add(lblNewLabel_1);
+		
+		JLabel lblNewLabel_2 = new JLabel("New label");
+		lblNewLabel_2.setIcon(new ImageIcon("D:\\Admin\\eclipse\\DACS1\\src\\icon\\icons8-key-30.png"));
+		lblNewLabel_2.setBounds(265, 110, 30, 30);
+		contentPane.add(lblNewLabel_2);
+		
+		JLabel lblNewLabel_2_1_1 = new JLabel("New label");
+		lblNewLabel_2_1_1.setIcon(new ImageIcon("D:\\Admin\\eclipse\\DACS1\\src\\icon\\icons8-tick-24.png"));
+		lblNewLabel_2_1_1.setBounds(265, 150, 30, 30);
+		contentPane.add(lblNewLabel_2_1_1);
+		
+		JButton btnRegister = new JButton("Register");
+		btnRegister.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String ten = textField.getText();
+				String pass = getMd5(passwordField.getText());
+				String passconfirm = getMd5(passwordField_1.getText());
+				String sql = "INSERT INTO [User] (ten,pass,passconfirm) VALUES (?,?,?)";
+				if (ten.isEmpty() || pass.isEmpty() || passconfirm.isEmpty()) {
+					JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo",
+							JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					try {
+						Connection c = DBConnection.getConnection();
+						PreparedStatement preparedStatement = c.prepareStatement(sql);
+						preparedStatement.setString(1, ten);
+						preparedStatement.setString(2, pass);
+						preparedStatement.setString(3, passconfirm);
+						preparedStatement.executeUpdate();
+						JOptionPane.showMessageDialog(null, "Đăng ký thành công!", "Thông báo",
+								JOptionPane.WARNING_MESSAGE);
 
-		jLabel1 = new javax.swing.JLabel();
-		jLabel4 = new javax.swing.JLabel();
-		jLabel5 = new javax.swing.JLabel();
-		jLabel6 = new javax.swing.JLabel();
-		jLabel7 = new javax.swing.JLabel();
-		jLabel8 = new javax.swing.JLabel();
-		jButton2 = new javax.swing.JButton();
-		jTextField1 = new javax.swing.JTextField();
-		jTextField2 = new javax.swing.JTextField();
-		jPasswordField1 = new javax.swing.JPasswordField();
-		jTextField5 = new javax.swing.JTextField();
-		jTextField3 = new javax.swing.JTextField();
-		jTextField4 = new javax.swing.JTextField();
-		jButton1 = new javax.swing.JButton();
-
-		setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-		setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-
-		jLabel1.setText("Tên đăng nhập:");
-
-		jLabel4.setText("Họ và tên:");
-
-		jLabel5.setText("Mật khẩu:");
-
-		jLabel6.setText("Tuổi:");
-
-		jLabel7.setText("Số điện thoại:");
-
-		jLabel8.setText("Email:");
-
-		jButton2.setBackground(new java.awt.Color(0, 102, 204));
-		jButton2.setText("Đăng kí");
-		jButton2.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				jButton2ActionPerformed(evt);
+					} catch (SQLException e2) {
+						String message = "<html><div style='background-color: #ffcccc; padding: 10px;'><font color='#cc0000'>Error:</font><br>Đăng ký không thành công! Vui lòng kiểm tra lại thông tin.</div></html>";
+						JOptionPane.showMessageDialog(null, message, "Error Message", JOptionPane.ERROR_MESSAGE);
+					}
+				}
 			}
 		});
-
-		jPasswordField1.setToolTipText("");
-
-		jButton1.setBackground(new java.awt.Color(204, 51, 0));
-		jButton1.setText("Trở lại");
-		jButton1.addMouseListener(new java.awt.event.MouseAdapter() {
-			public void mouseClicked(java.awt.event.MouseEvent evt) {
-				jButton1MouseClicked(evt);
+		btnRegister.setFont(new Font("Times New Roman", Font.BOLD, 19));
+		btnRegister.setBackground(new Color(102, 204, 255));
+		btnRegister.setBounds(278, 195, 110, 23);
+		contentPane.add(btnRegister);
+		
+		JButton btnNewButton = new JButton("Login");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				User u = new User();
+				u.setVisible(true);
+				dispose();
 			}
 		});
-
-		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-		getContentPane().setLayout(layout);
-		layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(layout
-				.createSequentialGroup().addContainerGap()
-				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-						.addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 63,
-								javax.swing.GroupLayout.PREFERRED_SIZE)
-						.addGroup(layout.createSequentialGroup().addGroup(layout
-								.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-										.addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE,
-												javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-										.addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE,
-												javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-										.addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE,
-												javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-										.addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE,
-												javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-										.addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE,
-												javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-								.addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 82,
-										javax.swing.GroupLayout.PREFERRED_SIZE))
-								.addGap(26, 26, 26)
-								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-										.addComponent(jTextField1).addComponent(jTextField2)
-										.addComponent(jPasswordField1, javax.swing.GroupLayout.DEFAULT_SIZE, 249,
-												Short.MAX_VALUE)
-										.addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 84,
-												javax.swing.GroupLayout.PREFERRED_SIZE)
-										.addComponent(jTextField3).addComponent(jTextField4))))
-				.addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-				.addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-						.addContainerGap(175, Short.MAX_VALUE).addComponent(jButton2).addGap(166, 166, 166)));
-		layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-				.addGroup(layout.createSequentialGroup()
-						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-								.addGroup(layout.createSequentialGroup().addComponent(jButton1).addGap(86, 86, 86))
-								.addGroup(layout.createSequentialGroup()
-										.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-												.addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE,
-														javax.swing.GroupLayout.DEFAULT_SIZE,
-														javax.swing.GroupLayout.PREFERRED_SIZE)
-												.addComponent(jLabel1))
-										.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-										.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-												.addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE,
-														javax.swing.GroupLayout.DEFAULT_SIZE,
-														javax.swing.GroupLayout.PREFERRED_SIZE)
-												.addComponent(jLabel4))))
-						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-								.addComponent(jPasswordField1, javax.swing.GroupLayout.PREFERRED_SIZE,
-										javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-								.addComponent(jLabel5))
-						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-								.addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE,
-										javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-								.addComponent(jLabel6))
-						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-								.addComponent(jLabel8, javax.swing.GroupLayout.Alignment.TRAILING)
-								.addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-										.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-												.addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE,
-														javax.swing.GroupLayout.DEFAULT_SIZE,
-														javax.swing.GroupLayout.PREFERRED_SIZE)
-												.addComponent(jLabel7))
-										.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-										.addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE,
-												javax.swing.GroupLayout.DEFAULT_SIZE,
-												javax.swing.GroupLayout.PREFERRED_SIZE)))
-						.addGap(18, 18, 18).addComponent(jButton2).addContainerGap(29, Short.MAX_VALUE)));
-
-		jButton2.getAccessibleContext().setAccessibleDescription("");
-		jTextField5.getAccessibleContext().setAccessibleDescription("");
-
-		pack();
+		btnNewButton.setFont(new Font("Times New Roman", Font.BOLD, 20));
+		btnNewButton.setBackground(new Color(102, 204, 255));
+		btnNewButton.setBounds(285, 229, 96, 23);
+		contentPane.add(btnNewButton);
 	}
-
 	public static String getMd5(String input) {
 		try {
 
@@ -163,87 +173,4 @@ public class Register extends javax.swing.JFrame {
 			throw new RuntimeException(e);
 		}
 	}
-
-	private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {
-		// TODO add your handling code here:
-		String user = jTextField1.getText();
-		String ten = jTextField2.getText();
-		String pass = getMd5(jPasswordField1.getText());
-		String tuoi = jTextField5.getText();
-		String sdt = jTextField3.getText();
-		String email = jTextField4.getText();
-		String sql = "INSERT INTO [User] ([user],ten,pass,tuoi,sdt,email) VALUES (?,?,?,?,?,?)";
-		if (user.isEmpty() || ten.isEmpty() || pass.isEmpty() || tuoi.isEmpty() || sdt.isEmpty() || email.isEmpty()) {
-			JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo",
-					JOptionPane.WARNING_MESSAGE);
-		} else {
-			try {
-				Connection c = DBConnection.getConnection();
-				PreparedStatement preparedStatement = c.prepareStatement(sql);
-				preparedStatement.setString(1, user);
-				preparedStatement.setString(2, ten);
-				preparedStatement.setString(3, pass);
-				preparedStatement.setString(4, tuoi);
-				preparedStatement.setString(5, sdt);
-				preparedStatement.setString(6, email);
-				preparedStatement.executeUpdate();
-
-			} catch (SQLException e) {
-				String message = "<html><div style='background-color: #ffcccc; padding: 10px;'><font color='#cc0000'>Error:</font><br>Đăng ký không thành công! Vui lòng kiểm tra lại thông tin.</div></html>";
-				JOptionPane.showMessageDialog(null, message, "Error Message", JOptionPane.ERROR_MESSAGE);
-			}
-		}
-
-	}
-
-	private void jButton1MouseClicked(java.awt.event.MouseEvent evt) {
-		Login dangNhap = new Login();
-		dispose();
-		dangNhap.setVisible(true);
-	}
-
-	public static void main(String args[]) {
-		try {
-			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					javax.swing.UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
-		} catch (ClassNotFoundException ex) {
-			java.util.logging.Logger.getLogger(Register.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (InstantiationException ex) {
-			java.util.logging.Logger.getLogger(Register.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (IllegalAccessException ex) {
-			java.util.logging.Logger.getLogger(Register.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
-			java.util.logging.Logger.getLogger(Register.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		}
-
-		java.awt.EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				new Register().setVisible(true);
-			}
-		});
-	}
-
-	private javax.swing.JButton jButton1;
-	private javax.swing.JButton jButton2;
-	private javax.swing.JLabel jLabel1;
-	private javax.swing.JLabel jLabel4;
-	private javax.swing.JLabel jLabel5;
-	private javax.swing.JLabel jLabel6;
-	private javax.swing.JLabel jLabel7;
-	private javax.swing.JLabel jLabel8;
-	private javax.swing.JPasswordField jPasswordField1;
-	private javax.swing.JTextField jTextField1;
-	private javax.swing.JTextField jTextField2;
-	private javax.swing.JTextField jTextField3;
-	private javax.swing.JTextField jTextField4;
-	private javax.swing.JTextField jTextField5;
-
 }
