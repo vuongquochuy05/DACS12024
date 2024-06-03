@@ -143,8 +143,6 @@ public class QLNV extends JFrame {
 		JMenuItem mntmNewMenuItem_3 = new JMenuItem("CSKH");
 		mnNewMenu_2.add(mntmNewMenuItem_3);
 		
-		JMenuItem mntmNewMenuItem_4 = new JMenuItem("Liên hệ");
-		mnNewMenu_2.add(mntmNewMenuItem_4);
 		contentPane = new JPanel();
 		contentPane.setBackground(new Color(255, 255, 204));
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -412,11 +410,11 @@ public class QLNV extends JFrame {
 		btnNewButton.setBackground(new Color(51, 204, 255));
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String ma = textField_4.getText().toLowerCase();
+				String ma = textField_4.getText();
 				if (ma.trim().length() == 0) {
 					roww.setRowFilter(null);
 				} else {
-					roww.setRowFilter(RowFilter.regexFilter("(?i)" + ma));
+					roww.setRowFilter(RowFilter.regexFilter(ma,0));
 				}
 			}
 		});

@@ -9,4 +9,6 @@ module DACS1 {
 	requires java.logging;
 	requires java.sql;
 	requires jcalendar;
+	requires java.xml;
+	requires jdk.httpserver;
 }

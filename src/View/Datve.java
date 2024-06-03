@@ -5,11 +5,11 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.time.ZoneId;
-import java.util.Date;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -23,8 +23,6 @@ import javax.swing.border.EmptyBorder;
 
 import com.toedter.calendar.JDateChooser;
 
-import DBConnection.DBConnection;
-
 public class Datve extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -34,7 +32,6 @@ public class Datve extends JFrame {
 	private JTextField textField_3;
 	private JTextField textField_4;
 	private JTextField textField_5;
-	Trangchu a = new Trangchu();
 	private JTextField textField_2;
 	private JDateChooser date;
 	private JComboBox<String> comboBox;
@@ -147,36 +144,63 @@ public class Datve extends JFrame {
 		panel.add(textghichu);
 
 		JButton btnNewButton = new JButton("Đặt vé");
+		// Trong phần xử lý sự kiện khi nhấn nút "Đặt vé"
 		btnNewButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String ten = textField.getText();
-				String sdt = textField_1.getText();
-				String sove = textField_3.getText();
-				String ghichu = textghichu.getText();
-				String machuyen = textField_2.getText();
-				String sql = "INSERT INTO DatVe (ten,sdt,sove,ghichu,ma) VALUES (?,?,?,?,?)";
-				if (ten.isEmpty() || sdt.isEmpty() || sove.isEmpty() || machuyen.isEmpty()) {
-					JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo",
-							JOptionPane.WARNING_MESSAGE);
-				} else {
-					try {
-						Connection c = DBConnection.getConnection();
-						PreparedStatement preparedStatement = c.prepareStatement(sql);
-						preparedStatement.setString(1, ten);
-						preparedStatement.setString(2, sdt);
-						preparedStatement.setString(3, sove);
-						preparedStatement.setString(4, ghichu);
-						preparedStatement.setString(5, machuyen);
-						preparedStatement.executeUpdate();
-						ThanhToan t = new ThanhToan();
-						t.setVisible(true);
-						dispose();
-					} catch (SQLException e2) {
-						e2.printStackTrace();
-					}
-				}
-			}
+		    public void actionPerformed(ActionEvent e) {
+		        String ten = textField.getText();
+		        String sdt = textField_1.getText();
+		        String sove = textField_3.getText();
+		        String ghichu = textghichu.getText();
+		        String machuyen = textField_2.getText();
+		        
+		        int soLuongVe = Integer.parseInt(sove);
+                double giaVe = Double.parseDouble(textField_6.getText());
+                double tongTien = soLuongVe * giaVe;
+
+		        if (ten.isEmpty() || sdt.isEmpty() || sove.isEmpty() || machuyen.isEmpty()) {
+		            JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+		        } else {
+		            try {
+		                Socket socket = new Socket("localhost", 1125);
+		                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+		                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+		                out.println("DATVE");
+		                out.println(ten);
+		                out.println(sdt);
+		                out.println(sove);
+		                out.println(ghichu);
+		                out.println(machuyen);
+		                out.println(tongTien);
+
+		                String response = in.readLine();
+		                if (response.equals("Dat ve thanh cong")) {
+		                    // Tính toán tổng tiền
+		                    try {
+		                        
+
+		                        // Hiển thị tổng tiền trên JFrame mới
+		                        ThanhToan thanhToanFrame = new ThanhToan(tongTien);
+		                        thanhToanFrame.updateSoVe(soLuongVe);
+		                        thanhToanFrame.updateGiaTien(giaVe);
+		                        thanhToanFrame.setVisible(true);
+		                    } catch (NumberFormatException ex) {
+		                        JOptionPane.showMessageDialog(null, "Định dạng số lượng vé hoặc giá vé không hợp lệ!", "Thông báo", JOptionPane.ERROR_MESSAGE);
+		                    }
+		                } else {
+		                    JOptionPane.showMessageDialog(null, "Đặt vé thất bại!", "Thông báo", JOptionPane.ERROR_MESSAGE);
+		                }
+
+		                in.close();
+		                out.close();
+		                socket.close();
+		            } catch (IOException ex) {
+		                ex.printStackTrace();
+		            }
+		        }
+		    }
 		});
+
 
 		btnNewButton.setBackground(new Color(0, 153, 255));
 		btnNewButton.setBounds(320, 300, 126, 28);
@@ -205,8 +229,7 @@ public class Datve extends JFrame {
 		JButton btnNewButton_1 = new JButton("Trở về");
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Trangchu t = new Trangchu();
-				
+				Chuyendi t = new Chuyendi();
 				t.setVisible(true);
 				dispose();
 			}
@@ -254,3 +277,4 @@ public class Datve extends JFrame {
 		 textField_6.setText(gia);
 	 }
 }
+

@@ -6,8 +6,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import DBConnection.DBConnection;
-
 import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -17,12 +15,14 @@ import java.awt.Font;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.awt.event.ActionEvent;
 
 public class Register extends JFrame {
@@ -110,40 +110,50 @@ public class Register extends JFrame {
 		lblNewLabel_2_1_1.setBounds(265, 150, 30, 30);
 		contentPane.add(lblNewLabel_2_1_1);
 		
-		JButton btnRegister = new JButton("Register");
+		JButton btnRegister = new JButton("Đăng ký");
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String ten = textField.getText();
 				String pass = getMd5(passwordField.getText());
 				String passconfirm = getMd5(passwordField_1.getText());
-				String sql = "INSERT INTO [User] (ten,pass,passconfirm) VALUES (?,?,?)";
 				if (ten.isEmpty() || pass.isEmpty() || passconfirm.isEmpty()) {
-					JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo",
-							JOptionPane.INFORMATION_MESSAGE);
-				} else {
-					try {
-						Connection c = DBConnection.getConnection();
-						PreparedStatement preparedStatement = c.prepareStatement(sql);
-						preparedStatement.setString(1, ten);
-						preparedStatement.setString(2, pass);
-						preparedStatement.setString(3, passconfirm);
-						preparedStatement.executeUpdate();
-						JOptionPane.showMessageDialog(null, "Đăng ký thành công!", "Thông báo",
-								JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                } else if (!pass.equals(passconfirm)) {
+                    JOptionPane.showMessageDialog(null, "Xác nhận mật khẩu không khớp!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                } else {
+                	 try {
+                         Socket socket = new Socket("localhost", 1124);
+                         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-					} catch (SQLException e2) {
-						String message = "<html><div style='background-color: #ffcccc; padding: 10px;'><font color='#cc0000'>Error:</font><br>Đăng ký không thành công! Vui lòng kiểm tra lại thông tin.</div></html>";
-						JOptionPane.showMessageDialog(null, message, "Error Message", JOptionPane.ERROR_MESSAGE);
-					}
-				}
+                         out.println("REGISTER");
+                         out.println(ten);
+                         out.println(pass);
+                         out.println(passconfirm);
+
+                         String response = in.readLine();
+                         if (response != null && response.equals("Register successful")) {
+                             JOptionPane.showMessageDialog(null, "Đăng ký thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                         } else {
+                             JOptionPane.showMessageDialog(null, "Đăng ký không thành công! Vui lòng kiểm tra lại thông tin.", "Thông báo lỗi", JOptionPane.ERROR_MESSAGE);
+                         }
+
+                         in.close();
+                         out.close();
+                         socket.close();
+                     } catch (IOException ex) {
+                         ex.printStackTrace();
+                         JOptionPane.showMessageDialog(null, "Lỗi kết nối đến server!", "Thông báo lỗi", JOptionPane.ERROR_MESSAGE);
+                     }
+                }
 			}
 		});
-		btnRegister.setFont(new Font("Times New Roman", Font.BOLD, 19));
+		btnRegister.setFont(new Font("Times New Roman", Font.BOLD, 16));
 		btnRegister.setBackground(new Color(102, 204, 255));
 		btnRegister.setBounds(278, 195, 110, 23);
 		contentPane.add(btnRegister);
 		
-		JButton btnNewButton = new JButton("Login");
+		JButton btnNewButton = new JButton("Đăng nhập");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				User u = new User();
@@ -151,11 +161,13 @@ public class Register extends JFrame {
 				dispose();
 			}
 		});
-		btnNewButton.setFont(new Font("Times New Roman", Font.BOLD, 20));
+		btnNewButton.setFont(new Font("Times New Roman", Font.BOLD, 16));
 		btnNewButton.setBackground(new Color(102, 204, 255));
-		btnNewButton.setBounds(285, 229, 96, 23);
+		btnNewButton.setBounds(278, 229, 110, 23);
 		contentPane.add(btnNewButton);
 	}
+
+
 	public static String getMd5(String input) {
 		try {
 
