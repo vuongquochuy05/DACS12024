@@ -36,7 +36,7 @@ public class hoTroUser extends JFrame {
 	Socket mngSocket = null;
 	String mngIP = null;
 	int mngPort = 0;
-	String staffName ="";
+	String staffName;
 	BufferedReader bf = null;
 	DataOutputStream os = null;
 	OutputThread t = null;

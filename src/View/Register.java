@@ -12,6 +12,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JPasswordField;
 import java.awt.Font;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
@@ -23,6 +28,7 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.awt.event.ActionEvent;
 
 public class Register extends JFrame {
@@ -113,12 +119,23 @@ public class Register extends JFrame {
 		JButton btnRegister = new JButton("Đăng ký");
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String ten = textField.getText();
-				String pass = getMd5(passwordField.getText());
-				String passconfirm = getMd5(passwordField_1.getText());
-				if (ten.isEmpty() || pass.isEmpty() || passconfirm.isEmpty()) {
+				try {
+				KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+	            keyGen.init(256);
+	            SecretKey secretKey = keyGen.generateKey();
+	            byte[] keyBytes = secretKey.getEncoded();
+	            SecretKey originalKey = getKeyFromBytes(keyBytes);
+	            
+	            String originalString = passwordField.getText();
+	            String encryptedString = encrypt(originalString, originalKey);
+	            String originalString1 = passwordField_1.getText();
+	            String encryptedString1 = encrypt(originalString1, originalKey);
+
+	            String ten = encrypt(textField.getText(), originalKey);
+	            String encodedKey = Base64.getEncoder().encodeToString(keyBytes);
+				if (ten.isEmpty() || originalString.isEmpty() || originalString1.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                } else if (!pass.equals(passconfirm)) {
+                } else if (!originalString.equals(originalString1)) {
                     JOptionPane.showMessageDialog(null, "Xác nhận mật khẩu không khớp!", "Thông báo", JOptionPane.WARNING_MESSAGE);
                 } else {
                 	 try {
@@ -128,14 +145,15 @@ public class Register extends JFrame {
 
                          out.println("REGISTER");
                          out.println(ten);
-                         out.println(pass);
-                         out.println(passconfirm);
+                         out.println(encodedKey);
+                         out.println(encryptedString);
+                         out.println(encryptedString1);
 
                          String response = in.readLine();
                          if (response != null && response.equals("Register successful")) {
                              JOptionPane.showMessageDialog(null, "Đăng ký thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                          } else {
-                             JOptionPane.showMessageDialog(null, "Đăng ký không thành công! Vui lòng kiểm tra lại thông tin.", "Thông báo lỗi", JOptionPane.ERROR_MESSAGE);
+                             JOptionPane.showMessageDialog(null, "Đăng ký không thành công! Thông tin sai hoặc tên người dùng bị trùng lặp.", "Thông báo lỗi", JOptionPane.ERROR_MESSAGE);
                          }
 
                          in.close();
@@ -146,6 +164,20 @@ public class Register extends JFrame {
                          JOptionPane.showMessageDialog(null, "Lỗi kết nối đến server!", "Thông báo lỗi", JOptionPane.ERROR_MESSAGE);
                      }
                 }
+                } catch (Exception e1) {
+		            e1.printStackTrace();
+		        }
+				
+			}
+			public static SecretKey getKeyFromBytes(byte[] keyBytes) {
+				return new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
+			}
+
+			public static String encrypt(String strToEncrypt, SecretKey secretKey) throws Exception {
+				Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+				cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+				byte[] encryptedBytes = cipher.doFinal(strToEncrypt.getBytes("UTF-8"));
+				return Base64.getEncoder().encodeToString(encryptedBytes);
 			}
 		});
 		btnRegister.setFont(new Font("Times New Roman", Font.BOLD, 16));
@@ -168,21 +200,4 @@ public class Register extends JFrame {
 	}
 
 
-	public static String getMd5(String input) {
-		try {
-
-			MessageDigest md = MessageDigest.getInstance("MD5");
-			byte[] messageDigest = md.digest(input.getBytes());
-			BigInteger no = new BigInteger(1, messageDigest);
-			String hashtext = no.toString(16);
-			while (hashtext.length() < 32) {
-				hashtext = "0" + hashtext;
-			}
-			return hashtext;
-		}
-
-		catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-	}
 }

@@ -6,8 +6,11 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
@@ -20,6 +23,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -144,61 +150,85 @@ public class Datve extends JFrame {
 		panel.add(textghichu);
 
 		JButton btnNewButton = new JButton("Đặt vé");
-		// Trong phần xử lý sự kiện khi nhấn nút "Đặt vé"
 		btnNewButton.addActionListener(new ActionListener() {
-		    public void actionPerformed(ActionEvent e) {
-		        String ten = textField.getText();
-		        String sdt = textField_1.getText();
-		        String sove = textField_3.getText();
-		        String ghichu = textghichu.getText();
-		        String machuyen = textField_2.getText();
-		        
-		        int soLuongVe = Integer.parseInt(sove);
-                double giaVe = Double.parseDouble(textField_6.getText());
-                double tongTien = soLuongVe * giaVe;
+			public void actionPerformed(ActionEvent e) {
+				 String ten = textField.getText();
+				 String sdt = textField_1.getText();
+				 String sove = textField_3.getText();
+				 String ghiChu = textghichu.getText();
+				 String maChuyen = textField_2.getText();
+				 int soLuongVe = Integer.parseInt(sove);
+	             double giaVe = Double.parseDouble(textField_6.getText());
+	             double tongTien = soLuongVe * giaVe;
+				if (ten.isEmpty() || sdt.isEmpty() || sove.isEmpty() || maChuyen.isEmpty()) {
+					JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo",
+							JOptionPane.WARNING_MESSAGE);
+				} else {
+					ThanhToan thanhToanFrame = new ThanhToan(tongTien);
+                    thanhToanFrame.updateSoVe(soLuongVe);
+                    thanhToanFrame.updateGiaTien(giaVe);
+                    thanhToanFrame.setVisible(true);
+                    dispose();
+					try {
+			              // Tạo file XML và ghi dữ liệu
+			              FileOutputStream fileOutputStream = new FileOutputStream("data.xml");
+			              XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
+			              XMLStreamWriter writer = outputFactory.createXMLStreamWriter(fileOutputStream);
 
-		        if (ten.isEmpty() || sdt.isEmpty() || sove.isEmpty() || machuyen.isEmpty()) {
-		            JOptionPane.showMessageDialog(null, "Vui lòng điền đầy đủ thông tin vào các trường!", "Thông báo", JOptionPane.WARNING_MESSAGE);
-		        } else {
-		            try {
-		                Socket socket = new Socket("localhost", 1125);
-		                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-		                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			              writer.writeStartDocument();
+			              writer.writeStartElement("productTickets");
 
-		                out.println("DATVE");
-		                out.println(ten);
-		                out.println(sdt);
-		                out.println(sove);
-		                out.println(ghichu);
-		                out.println(machuyen);
-		                out.println(tongTien);
+			              writer.writeStartElement("person");
+			              writer.writeStartElement("name");
+			              writer.writeCharacters(ten);
+			              writer.writeEndElement(); // Kết thúc thẻ name
+			              writer.writeStartElement("sdt");
+			              writer.writeCharacters(sdt);
+			              writer.writeEndElement();
+			              writer.writeStartElement("sove");
+			              writer.writeCharacters(sove);
+			              writer.writeEndElement(); 
+			              writer.writeStartElement("ghichu");
+			              writer.writeCharacters(ghiChu);
+			              writer.writeEndElement(); 
+			              writer.writeStartElement("machuyen");
+			              writer.writeCharacters(maChuyen);
+			              writer.writeEndElement(); 
+			              writer.writeStartElement("tongtien");
+			              writer.writeCharacters(Double.toString(tongTien));
+			              writer.writeEndElement(); 
+			              writer.writeEndElement(); // Kết thúc thẻ person
 
-		                String response = in.readLine();
-		                if (response.equals("Dat ve thanh cong")) {
-		                    // Tính toán tổng tiền
-		                    try {
-		                        
+			              writer.writeEndElement(); // Kết thúc thẻ data
+			              writer.writeEndDocument();
 
-		                        // Hiển thị tổng tiền trên JFrame mới
-		                        ThanhToan thanhToanFrame = new ThanhToan(tongTien);
-		                        thanhToanFrame.updateSoVe(soLuongVe);
-		                        thanhToanFrame.updateGiaTien(giaVe);
-		                        thanhToanFrame.setVisible(true);
-		                    } catch (NumberFormatException ex) {
-		                        JOptionPane.showMessageDialog(null, "Định dạng số lượng vé hoặc giá vé không hợp lệ!", "Thông báo", JOptionPane.ERROR_MESSAGE);
-		                    }
-		                } else {
-		                    JOptionPane.showMessageDialog(null, "Đặt vé thất bại!", "Thông báo", JOptionPane.ERROR_MESSAGE);
-		                }
+			              writer.flush();
+			              writer.close();
+			              fileOutputStream.close();
+			              // Gửi file XML đến server
+			              Socket socket = new Socket("localhost", 8000);
+			              FileInputStream fileInputStream = new FileInputStream("data.xml");
+			              OutputStream outputStream = socket.getOutputStream();
 
-		                in.close();
-		                out.close();
-		                socket.close();
-		            } catch (IOException ex) {
-		                ex.printStackTrace();
-		            }
-		        }
-		    }
+			              byte[] buffer = new byte[4096];
+			              int bytesRead;
+
+			              while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+			                  outputStream.write(buffer, 0, bytesRead);
+			              }
+
+			              fileInputStream.close();
+			              outputStream.close();
+			              socket.close();
+			              
+			              System.out.println("File XML đã được gửi đến server.");
+			          } catch (IOException | XMLStreamException e2) {
+			              e2.printStackTrace();
+			              System.out.println("ketnoi that bai");
+			          }
+						
+				}
+			}
 		});
 
 

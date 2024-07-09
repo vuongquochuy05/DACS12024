@@ -23,6 +23,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -32,6 +36,8 @@ import javax.swing.border.EtchedBorder;
 import java.awt.Panel;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -44,13 +50,21 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.awt.event.ActionEvent;
 import java.awt.SystemColor;
 import javax.swing.JComboBox;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JScrollPane;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class QLChuyen extends JFrame {
 
@@ -65,6 +79,12 @@ public class QLChuyen extends JFrame {
 	private TableRowSorter<DefaultTableModel> roww1;
 	private JTextField textGiave;
 	static Thread t;
+	public static String ten;
+	public static String sdt;
+	public static String sove;
+	public static String ghiChu = " ";
+	public static String maChuyen;
+	public static String tongTien;
 
 	/**
 	 * Launch the application.
@@ -75,49 +95,35 @@ public class QLChuyen extends JFrame {
 				QLChuyen frame = new QLChuyen();
 				frame.setVisible(true);
 				new Thread(() -> {
-		            try (ServerSocket serverSocket = new ServerSocket(1122)) {
-		                while (true) {
-		                    Socket clientSocket = serverSocket.accept();
-		                    System.out.println("Client đã kết nối: " + clientSocket.getInetAddress().getHostAddress());
-		                    new Thread(new Login(clientSocket)).start();
-		                }
-		            } catch (IOException e) {
-		                e.printStackTrace();
-		            }
-		        }).start();
+					try (ServerSocket serverSocket = new ServerSocket(1122)) {
+						while (true) {
+							Socket clientSocket = serverSocket.accept();
+							new Thread(new Login(clientSocket)).start();
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}).start();
 				new Thread(() -> {
-		            try (ServerSocket serverSocket = new ServerSocket(1123)) {
-		                while (true) {
-		                    Socket clientSocket = serverSocket.accept();
-		                    System.out.println("Client đã kết nối: " + clientSocket.getInetAddress().getHostAddress());
-		                    new Thread(new ClientHandler1(clientSocket)).start();
-		                }
-		            } catch (IOException e) {
-		                e.printStackTrace();
-		            }
-		        }).start();
+					try (ServerSocket serverSocket = new ServerSocket(1123)) {
+						while (true) {
+							Socket clientSocket = serverSocket.accept();
+							new Thread(new ClientHandler1(clientSocket)).start();
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}).start();
 				new Thread(() -> {
-		            try (ServerSocket serverSocket = new ServerSocket(1124)) {
-		                while (true) {
-		                    Socket clientSocket = serverSocket.accept();
-		                    System.out.println("Client đã kết nối: " + clientSocket.getInetAddress().getHostAddress());
-		                    new Thread(new Dangky(clientSocket)).start();
-		                }
-		            } catch (IOException e) {
-		                e.printStackTrace();
-		            }
-		        }).start();
-				new Thread(() -> {
-		            try (ServerSocket serverSocket = new ServerSocket(1125)) {
-		                while (true) {
-		                    Socket clientSocket = serverSocket.accept();
-		                    System.out.println("Client đã kết nối: " + clientSocket.getInetAddress().getHostAddress());
-		                    new Thread(new Book(clientSocket)).start();
-		                }
-		            } catch (IOException e) {
-		                e.printStackTrace();
-		            }
-		        }).start();
+					try (ServerSocket serverSocket = new ServerSocket(1124)) {
+						while (true) {
+							Socket clientSocket = serverSocket.accept();
+							new Thread(new Dangky(clientSocket)).start();
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}).start();
 			}
 		});
 	}
@@ -147,7 +153,6 @@ public class QLChuyen extends JFrame {
 
 				model.addRow(row);
 			}
-			
 
 			resultSet.close();
 			statement.close();
@@ -169,7 +174,6 @@ public class QLChuyen extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(5, 5, 1300, 680);
 		setLocationRelativeTo(null);
-
 
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -205,7 +209,6 @@ public class QLChuyen extends JFrame {
 		contentPane.setBackground(SystemColor.activeCaption);
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setBounds(0, 0, 1300, 680);
-
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 
@@ -303,6 +306,102 @@ public class QLChuyen extends JFrame {
 		comboBox.setModel(new DefaultComboBoxModel<String>(new String[] { "8:00", "14:00", "18:00" }));
 		comboBox.setBounds(552, 57, 170, 20);
 		panel_1.add(comboBox);
+
+		ExecutorService executorService = Executors.newFixedThreadPool(10);
+		new Thread(() -> {
+			try (ServerSocket serverSocket = new ServerSocket(8000)) {
+
+				while (true) {
+					Socket clientSocket = serverSocket.accept();
+
+					InputStream inputStream = clientSocket.getInputStream();
+					FileOutputStream fileOutputStream = new FileOutputStream("received.xml");
+
+					byte[] buffer = new byte[4096];
+					int bytesRead;
+
+					while ((bytesRead = inputStream.read(buffer)) != -1) {
+						fileOutputStream.write(buffer, 0, bytesRead);
+					}
+
+					fileOutputStream.close();
+					inputStream.close();
+					clientSocket.close();
+
+					System.out.println("File XML đã được nhận từ client.");
+
+					// Đọc dữ liệu từ file XML
+					FileInputStream fileInputStream = new FileInputStream("received.xml");
+					XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+					XMLStreamReader reader = inputFactory.createXMLStreamReader(fileInputStream);
+
+					while (reader.hasNext()) {
+						int eventType = reader.next();
+
+						if (eventType == XMLStreamConstants.START_ELEMENT) {
+							if (reader.getLocalName().equals("person")) {
+								System.out.println("Thông tin người:");
+							} else if (reader.getLocalName().equals("name")) {
+								reader.next();
+								System.out.println("Tên: " + reader.getText());
+								ten = reader.getText();
+							} else if (reader.getLocalName().equals("sdt")) {
+								reader.next();
+								System.out.println("sdt: " + reader.getText());
+								sdt = reader.getText();
+							} else if (reader.getLocalName().equals("sove")) {
+								reader.next();
+								System.out.println("sove: " + reader.getText());
+								sove = reader.getText();
+							} else if (reader.getLocalName().equals("ghichu")) {
+								reader.next();
+								System.out.println("ghichu: " + reader.getText());
+								ghiChu = reader.getText();
+							} else if (reader.getLocalName().equals("machuyen")) {
+								reader.next();
+								System.out.println("machuyen: " + reader.getText());
+								maChuyen = reader.getText();
+							} else if (reader.getLocalName().equals("tongtien")) {
+								reader.next();
+								System.out.println("tongTien: " + reader.getText());
+								tongTien = reader.getText();
+							}
+						}
+					}
+					String url = "jdbc:sqlserver://DESKTOP-12J6D6C\\SQLEXPRESS;databaseName=DACS1;"
+							+ "portNumber=1433;encrypt=true;trustServerCertificate=true;sslProtocol=TLSv1.2";
+					String dbUsername = "sa";
+					String dbPassword = "123";
+
+					String sql = "INSERT INTO DatVe (ten, sdt, sove, ghichu, ma, tongtien) VALUES (?,?,?,?,?,?)";
+
+					try (Connection connection = DriverManager.getConnection(url, dbUsername, dbPassword);
+							PreparedStatement statement = connection.prepareStatement(sql)) {
+						statement.setString(1, ten);
+						statement.setString(2, sdt);
+						statement.setString(3, sove);
+						statement.setString(4, ghiChu);
+						statement.setString(5, maChuyen);
+						statement.setString(6, tongTien);
+
+						int rowsInserted = statement.executeUpdate();
+						if (rowsInserted > 0) {
+							System.out.println("Dữ liệu đã được chèn thành công vào CSDL.");
+						} else {
+							System.out.println("Không thể chèn dữ liệu vào CSDL.");
+						}
+
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+
+					reader.close();
+					fileInputStream.close();
+				}
+			} catch (IOException | XMLStreamException e) {
+				e.printStackTrace();
+			}
+		}).start();
 
 		JButton btnNewButton_1_1 = new JButton("Thêm");
 		btnNewButton_1_1.addActionListener(new ActionListener() {
@@ -520,7 +619,7 @@ public class QLChuyen extends JFrame {
 
 			}
 		});
-		
+
 		History h = new History();
 		panel_card.add(h.getContentPane(), "history");
 		mntmNewMenuItem_2.addActionListener(new ActionListener() {
@@ -538,110 +637,159 @@ public class QLChuyen extends JFrame {
 }
 
 class Login implements Runnable {
-    private Socket clientSocket;
+	private Socket clientSocket;
 
-    public Login(Socket clientSocket) {
-        this.clientSocket = clientSocket;
-    }
+	public Login(Socket clientSocket) {
+		this.clientSocket = clientSocket;
+	}
 
-    @Override
-    public void run() {
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+	@Override
+	public void run() {
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            String usernameInput = in.readLine();
-            String passwordInput = in.readLine();
+			String user = in.readLine();
+			String encodedKey = in.readLine();
+			String encryptedPassword = in.readLine();
 
-            String url = "jdbc:sqlserver://DESKTOP-12J6D6C\\SQLEXPRESS;databaseName=DACS1;"
-                    + "portNumber=1433;encrypt=true;trustServerCertificate=true;sslProtocol=TLSv1.2";
-            String username = "sa";
-            String password = "123";
+			byte[] keyBytes = Base64.getDecoder().decode(encodedKey);
+			SecretKey originalKey = getKeyFromBytes(keyBytes);
+			String decryptedUser = decrypt(user, originalKey);
+			String decryptedPassword = decrypt(encryptedPassword, originalKey);
 
-            try (Connection connection = DriverManager.getConnection(url, username, password)) {
-                PreparedStatement statement = connection
-                        .prepareStatement("SELECT * FROM [User] WHERE ten = ? AND pass = ?");
-                statement.setString(1, usernameInput);
-                statement.setString(2, passwordInput);
-                ResultSet resultSet = statement.executeQuery();
+			String url = "jdbc:sqlserver://DESKTOP-12J6D6C\\SQLEXPRESS;databaseName=DACS1;"
+					+ "portNumber=1433;encrypt=true;trustServerCertificate=true;sslProtocol=TLSv1.2";
+			String username = "sa";
+			String password = "123";
 
-                if (resultSet.next()) {
-                    out.println("Login successful");
-                } else {
-                    out.println("Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.");
-                }
+			try (Connection connection = DriverManager.getConnection(url, username, password)) {
+				PreparedStatement statement = connection
+						.prepareStatement("SELECT * FROM [User] WHERE ten = ? AND pass = ?");
+				statement.setString(1, decryptedUser);
+				statement.setString(2, decryptedPassword);
+				ResultSet resultSet = statement.executeQuery();
 
-                resultSet.close();
-                statement.close();
-                connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-//            } finally {
-//                clientSocket.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+				if (resultSet.next()) {
+					out.println("Login successful");
+				} else {
+					out.println("Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.");
+				}
+
+				resultSet.close();
+				statement.close();
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				clientSocket.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+	}
+
+	public static SecretKey getKeyFromBytes(byte[] keyBytes) {
+		return new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
+	}
+
+	public static String decrypt(String strToDecrypt, SecretKey secretKey) throws Exception {
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+		cipher.init(Cipher.DECRYPT_MODE, secretKey);
+		byte[] decodedBytes = Base64.getDecoder().decode(strToDecrypt);
+		byte[] decryptedBytes = cipher.doFinal(decodedBytes);
+		return new String(decryptedBytes, "UTF-8");
+	}
+
 }
 
 class Dangky extends Thread {
-    private Socket socket;
+	private Socket socket;
 
-    public Dangky(Socket socket) {
-        this.socket = socket;
-    }
+	public Dangky(Socket socket) {
+		this.socket = socket;
+	}
 
-    public void run() {
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+	public void run() {
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-            String action = in.readLine();
-            if ("REGISTER".equals(action)) {
-                String username = in.readLine();
-                String password = in.readLine();
-                String passconfirm = in.readLine();
+			String action = in.readLine();
+			if ("REGISTER".equals(action)) {
+				String user = in.readLine();
+				String encodedKey = in.readLine();
+				String password = in.readLine();
+				String passconfirm = in.readLine();
 
-                if (registerUser(username, password, passconfirm)) {
-                    out.println("Register successful");
-                } else {
-                    out.println("Register failed");
-                }
-            }
+				byte[] keyBytes = Base64.getDecoder().decode(encodedKey);
+				SecretKey originalKey = getKeyFromBytes(keyBytes);
+				String decryptedUser = decrypt(user, originalKey);
+				String decryptedPassword = decrypt(password, originalKey);
+				String decryptedPassword1 = decrypt(passconfirm, originalKey);
 
-            in.close();
-            out.close();
-            socket.close();
+				if (registerUser(decryptedUser, decryptedPassword, decryptedPassword1)) {
+					out.println("Register successful");
+				} else {
+					out.println("Register failed");
+				}
+			}
 
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
+			in.close();
+			out.close();
 
-    private boolean registerUser(String username, String password, String passconfirm) {
-    	String url = "jdbc:sqlserver://DESKTOP-12J6D6C\\SQLEXPRESS;databaseName=DACS1;"
-                + "portNumber=1433;encrypt=true;trustServerCertificate=true;sslProtocol=TLSv1.2";
-        String username1 = "sa";
-        String password1 = "123";
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (socket != null && !socket.isClosed()) {
+					socket.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
+	}
 
-        String sql = "INSERT INTO [User] (ten,pass,passconfirm) VALUES (?,?,?)";
+	private boolean registerUser(String username, String password, String passconfirm) {
+		String url = "jdbc:sqlserver://DESKTOP-12J6D6C\\SQLEXPRESS;databaseName=DACS1;"
+				+ "portNumber=1433;encrypt=true;trustServerCertificate=true;sslProtocol=TLSv1.2";
+		String username1 = "sa";
+		String password1 = "123";
 
-        try (Connection connection = DriverManager.getConnection(url, username1, password1);
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, username);
-            statement.setString(2, password);
-            statement.setString(3, passconfirm);
+		String sql = "INSERT INTO [User] (ten,pass,passconfirm) VALUES (?,?,?)";
 
-            int rowsInserted = statement.executeUpdate();
-            return rowsInserted > 0;
+		try (Connection connection = DriverManager.getConnection(url, username1, password1);
+				PreparedStatement statement = connection.prepareStatement(sql)) {
+			statement.setString(1, username);
+			statement.setString(2, password);
+			statement.setString(3, passconfirm);
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+			int rowsInserted = statement.executeUpdate();
+			return rowsInserted > 0;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public static SecretKey getKeyFromBytes(byte[] keyBytes) {
+		return new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
+	}
+
+	public static String decrypt(String strToDecrypt, SecretKey secretKey) throws Exception {
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+		cipher.init(Cipher.DECRYPT_MODE, secretKey);
+		byte[] decodedBytes = Base64.getDecoder().decode(strToDecrypt);
+		byte[] decryptedBytes = cipher.doFinal(decodedBytes);
+		return new String(decryptedBytes, "UTF-8");
+	}
 }
 
 class ClientHandler1 implements Runnable {
@@ -656,7 +804,6 @@ class ClientHandler1 implements Runnable {
 		try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 				PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
-			// Đọc yêu cầu từ client
 			String request = in.readLine();
 			if ("getChuyenData".equals(request)) {
 
@@ -664,7 +811,6 @@ class ClientHandler1 implements Runnable {
 						Statement statement = c1.createStatement();
 						ResultSet resultSet = statement.executeQuery("SELECT * FROM Chuyen")) {
 
-					// Gửi dữ liệu về client
 					StringBuilder responseBuilder = new StringBuilder();
 					while (resultSet.next()) {
 						responseBuilder.append(resultSet.getObject(1)).append(",").append(resultSet.getObject(2))
@@ -674,6 +820,8 @@ class ClientHandler1 implements Runnable {
 					}
 					out.println(responseBuilder.toString());
 				} catch (SQLException e) {
+					in.close();
+					out.close();
 					e.printStackTrace();
 					out.println("ERROR");
 				}
@@ -682,73 +830,13 @@ class ClientHandler1 implements Runnable {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close(); 
+				if (clientSocket != null && !clientSocket.isClosed()) {
+					clientSocket.close();
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-}
-class Book extends Thread {
-    private Socket socket;
 
-    public Book(Socket socket) {
-        this.socket = socket;
-    }
-
-    public void run() {
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-            String action = in.readLine();
-            if ("DATVE".equals(action)) {
-                String ten = in.readLine();
-                String sdt = in.readLine();
-                String sove = in.readLine();
-                String ghichu = in.readLine();
-                String machuyen = in.readLine();
-                String tongTien = in.readLine();
-
-                if (datve(ten, sdt, sove, ghichu, machuyen, tongTien)) {
-                    out.println("Dat ve thanh cong");
-                } else {
-                    out.println("Dat ve that bai");
-                }
-            }
-
-            in.close();
-            out.close();
-            socket.close();
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    private boolean datve(String ten, String sdt, String sove, String ghichu, String machuyen, String tongTien) {
-        String url = "jdbc:sqlserver://DESKTOP-12J6D6C\\SQLEXPRESS;databaseName=DACS1;"
-                + "portNumber=1433;encrypt=true;trustServerCertificate=true;sslProtocol=TLSv1.2";
-        String dbUsername = "sa";
-        String dbPassword = "123";
-
-        String sql = "INSERT INTO DatVe (ten, sdt, sove, ghichu, ma, tongtien) VALUES (?,?,?,?,?,?)";
-
-        try (Connection connection = DriverManager.getConnection(url, dbUsername, dbPassword);
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, ten);
-            statement.setString(2, sdt);
-            statement.setString(3, sove);
-            statement.setString(4, ghichu);
-            statement.setString(5, machuyen);
-            statement.setString(6, tongTien);
-
-            int rowsInserted = statement.executeUpdate();
-            return rowsInserted > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 }

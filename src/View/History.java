@@ -11,6 +11,8 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -29,6 +31,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -40,6 +45,12 @@ import java.awt.Color;
 import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
 import java.awt.event.ActionListener;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.awt.event.ActionEvent;
 
 public class History extends JFrame {
@@ -57,6 +68,7 @@ public class History extends JFrame {
 	private JTextField textField_ten;
 	private JTextField textField_sdt;
 	private JTextField textField_soVe;
+	
 
 	/**
 	 * Launch the application.
@@ -353,4 +365,5 @@ public class History extends JFrame {
 			}
 		});
 	}
+
 }

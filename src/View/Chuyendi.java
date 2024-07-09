@@ -87,7 +87,6 @@ public class Chuyendi extends JFrame {
     	        while ((response = in1.readLine()) != null) {
     	            responseData.append(response).append("\n");
     	        }
-    	        System.out.println(responseData);
     	        String[] rows = responseData.toString().split("\n");
     	        for (String row : rows) {
     	            String[] rowData = row.split(",");
@@ -97,6 +96,9 @@ public class Chuyendi extends JFrame {
     	                System.out.println("Dữ liệu không hợp lệ từ server: " + row);
     	            }
     	        }
+    	        in1.close();
+    	        out1.close();
+    	        socket.close();
     	    } catch (IOException e) {
     	        JOptionPane.showMessageDialog(null, "Không thể kết nối đến máy chủ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
     	        e.printStackTrace();
@@ -106,7 +108,7 @@ public class Chuyendi extends JFrame {
 
     	roww = new TableRowSorter<>(model);
     	table.setModel(model);
-    	table.setRowSorter(roww);// Notify the table that the data has changed
+    	table.setRowSorter(roww);
     }
 
     public Chuyendi() {
@@ -132,8 +134,6 @@ public class Chuyendi extends JFrame {
         JMenuItem mntmNewMenuItem_3 = new JMenuItem("CSKH");
         mnNewMenu_2.add(mntmNewMenuItem_3);
 
-        JMenuItem mntmNewMenuItem_4 = new JMenuItem("Liên hệ");
-        mnNewMenu_2.add(mntmNewMenuItem_4);
         contentPane = new JPanel();
         contentPane.setBackground(SystemColor.activeCaption);
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -323,4 +323,5 @@ public class Chuyendi extends JFrame {
             }
         });
     }
+   
 }

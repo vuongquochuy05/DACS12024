@@ -150,9 +150,6 @@ public class hoTroAdmin extends JFrame implements Runnable{
 			}
 		}
 	}
-	private static void qliDatVe(Socket socket) {
-		
-	}
 
 //	@Override
 //	public void run() {
